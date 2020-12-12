@@ -58,6 +58,15 @@ export class SantaHelperComponent {
 
   santaLog: string; // result
 
+  route: {
+    input: string | null; 
+    length: number | null; 
+    output: string | null;
+    score: number | null;
+  };
+
+  
+
   //work with input data
 
   handleFileInput(files: FileList, context): void {
@@ -98,6 +107,14 @@ export class SantaHelperComponent {
   // Init Christmas Day HO-HO-HO
 
   setInitData(data): void{
+    this.route = {
+      input: null, 
+      length: null, 
+      output: null,
+      score: null,
+    }
+  
+    this.route.input = data.slice();
     let definition = data.shift();
     let definitionArray = definition.split(' ');
 
@@ -128,6 +145,9 @@ export class SantaHelperComponent {
     if(!selectedChild){
       this.santaBag = this.santaBagVolume;
       selectedChild = this.sortedList[0];
+      this.route.length = this.route.length + selectedChild.toSantaBase;
+    } else {
+      this.route.length = this.route.length + selectedChild.distance;
     };
     this.addToSantaBag(selectedChild);
         
@@ -172,23 +192,31 @@ export class SantaHelperComponent {
     let sortedSiblings = list.length > 1 ? this.sortList(list, 'distance') : list;
     return sortedSiblings[0];
   }
+
   
   santaGoToBase(){
     for (let i = 0; i < this.giftsInBag.length; i++){
       this.santaLog = this.santaLog + ' ' +this.giftsInBag[i].index + ' ';
     }
+    this.route.length = this.route.length + this.giftsInBag[this.giftsInBag.length-1].toSantaBase;
     this.santaBag = 0;
     this.giftsInBag = [];
+    
   }
 
-  checkList() {
+  checkList(): void {
     if (this.sortedList.length > 0) {
       this.loadingSantaBag();
     } else {
       this.santaLog = this.santaLog + '0';
-      console.log(this.santaLog);
+      this.route.output = this.santaLog;
+      this.checkScore(this.route);
+      console.log(this.route);
     }
-  }  
+  }
+
+  checkScore(route): void {
+  }
 
   sortList(list, property): Child[] {
     return list.sort((a: Child, b: Child): number => { return a[property] > b[property] ? 1 : -1 });
@@ -197,5 +225,5 @@ export class SantaHelperComponent {
   countDistance(aX: number, aY: number, bX: number, bY: number): number {
     let result = Math.sqrt(Math.pow((aX - bX), 2) + Math.pow((aY - bY), 2));
     return result;
-  }  
+  }
 }
