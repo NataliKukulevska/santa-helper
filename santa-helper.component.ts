@@ -58,8 +58,6 @@ export class SantaHelperComponent {
 
   santaLog: string; // result
 
-  
-
   //work with input data
 
   handleFileInput(files: FileList, context): void {
@@ -174,7 +172,6 @@ export class SantaHelperComponent {
     let sortedSiblings = list.length > 1 ? this.sortList(list, 'distance') : list;
     return sortedSiblings[0];
   }
-
   
   santaGoToBase(){
     for (let i = 0; i < this.giftsInBag.length; i++){
@@ -191,11 +188,7 @@ export class SantaHelperComponent {
       this.santaLog = this.santaLog + '0';
       console.log(this.santaLog);
     }
-  }
-
-  
-
-  
+  }  
 
   sortList(list, property): Child[] {
     return list.sort((a: Child, b: Child): number => { return a[property] > b[property] ? 1 : -1 });
@@ -204,9 +197,5 @@ export class SantaHelperComponent {
   countDistance(aX: number, aY: number, bX: number, bY: number): number {
     let result = Math.sqrt(Math.pow((aX - bX), 2) + Math.pow((aY - bY), 2));
     return result;
-  }
-
-
-
-  
+  }  
 }
