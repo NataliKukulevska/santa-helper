@@ -96,7 +96,7 @@ export class SantaHelperComponent {
       addList.push(child);
     }
 
-    this.sortedList = this.sortList(addList.slice(), 'toSantaBase');
+    this.sortedList = this.sortList(addList.slice(), 'toSantaBase', 'desc');
     this.santaBagVolume = santa.bagVolume;
     this.santaBag = this.santaBagVolume;
     this.giftsInBag = [];
@@ -156,7 +156,7 @@ export class SantaHelperComponent {
       list[i].distance = this.countDistance(selectedChild.homeX, selectedChild.homeY, list[i].homeX, list[i].homeY);
     }
 
-    let sortedNeighbors = list.length > 1 ? this.sortList(list, 'distance') : list;
+    let sortedNeighbors = list.length > 1 ? this.sortList(list, 'distance+wayToSanta') : list;
     return sortedNeighbors[0];
   }
 
@@ -175,7 +175,13 @@ export class SantaHelperComponent {
     }
   }
 
-  sortList(list: Child[], property: string): Child[] {
+  sortList(list: Child[], property: string, type?): Child[] {
+    if (type == 'desc'){return list.sort((a: Child, b: Child): number => { return a[property] > b[property] ? -1 : 1 });}
+
+    if (property == 'distance+wayToSanta'){
+      return list.sort((a: Child, b: Child): number => { 
+        return ((a.distance + a.toSantaBase) > (b.distance + b.toSantaBase)) ? 1 : -1 });}
+    
     return list.sort((a: Child, b: Child): number => { return a[property] > b[property] ? 1 : -1 });
   }
 
