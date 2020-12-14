@@ -1,44 +1,10 @@
 import { Component } from '@angular/core';
+import { Child } from '../models/child.model';
+import { Santa } from '../models/santa.model';
 
-export class Child {
-  index: number;
-  homeX: number;
-  homeY: number;
-  giftVolume: number;
-  toSantaBase: number | null;
-  distance: number | null = null;
-
-  constructor(index: number, 
-              homeX: number, 
-              homeY: number, 
-              giftVolume: number, 
-              toSantaBase?: number|null, 
-              distance?: number|null){
-    this.index = index;
-    this.homeX  = homeX;
-    this.homeY = homeY;
-    this.giftVolume = giftVolume;
-    this.toSantaBase = toSantaBase;
-    this.distance = distance;
-  }
-}
-
-export class Santa {
-  homeX: number;
-  homeY: number;
-  bagVolume: number;
-
-  constructor(homeX: number, 
-              homeY: number, 
-              bagVolume: number){
-    this.homeX  = homeX;
-    this.homeY = homeY;
-    this.bagVolume = bagVolume;
-  }
-}
 
 @Component({
-  selector: 'app-santa-helper',
+  selector: 'mc-santa-helper',
   templateUrl: './santa-helper.component.html',
   styleUrls: ['./santa-helper.component.scss']
 })
