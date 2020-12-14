@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { Child } from '../models/child.model';
 import { Santa } from '../models/santa.model';
+import { TestCaseSummary } from '../models/testCase.model';
+import { IfStmt } from '@angular/compiler';
 
 
 @Component({
@@ -13,38 +15,31 @@ export class SantaHelperComponent {
   fileToUpload = null;
   fileContent = '';
   context = this;
+
   numberOfTestCases: number;
+  testCaseSummary: TestCaseSummary;
+  routes: TestCaseSummary[] = [];
 
   santaBagVolume: number; //available volume
-
   santaBag: number; // free space in bag
   giftsInBag: Child[] = []; // list of children wich gifts are already in bag 
-  
   sortedList: Child[]; // list of children sorted by distance to santaBase
-
-  santaLog: string; // result
-
-  route: {
-    input: string | null; 
-    length: number | null; 
-    output: string | null;
-    score: number | null;
-  };
-
-  
+  santaLog: string; // route
 
   //work with input data
 
   handleFileInput(files: FileList, context): void {
-    var file = files.item(0);
-    var reader = new FileReader();
+    if (files && files.item(0)){
+      var file = files.item(0);
+      var reader = new FileReader();
 
-    reader.onload = function() {
-      context.fileContent = reader.result;
-      context.parseInputData();
+      reader.onload = function() {
+        context.fileContent = reader.result;
+        context.parseInputData();
+      }
+
+      reader.readAsText(file);
     }
-
-    reader.readAsText(file);
   }
 
   parseInputData(): void{
@@ -54,12 +49,14 @@ export class SantaHelperComponent {
       this.numberOfTestCases = +dataArray[0];
       dataArray.shift();
       let arrayOfTestCases = this.splitToTestCases(dataArray, this.numberOfTestCases);
-      arrayOfTestCases.map((data) => this.setInitData(data))
+      arrayOfTestCases.map((data) => this.setInitData(data));
+      console.log(this.routes);
       console.log('Merry Christmas! HO-HO-HO!!!');
     }
+      
   }
 
-  splitToTestCases(array: string[], numberOfTestCases: number): String[][] {
+  splitToTestCases(array: string[], numberOfTestCases: number): string[][] {
     let arrayOfTestCases = [];
 
     for( let i = 0; i < numberOfTestCases; i++){
@@ -72,15 +69,16 @@ export class SantaHelperComponent {
 
   // Init Christmas Day HO-HO-HO
 
-  setInitData(data): void{
-    this.route = {
+  setInitData(data: string[]): void{
+    this.testCaseSummary = {
       input: null, 
       length: null, 
-      output: null,
+      output: '',
       score: null,
     }
   
-    this.route.input = data.slice();
+    this.testCaseSummary.input = data.slice();
+
     let definition = data.shift();
     let definitionArray = definition.split(' ');
 
@@ -100,43 +98,46 @@ export class SantaHelperComponent {
 
     this.sortedList = this.sortList(addList.slice(), 'toSantaBase');
     this.santaBagVolume = santa.bagVolume;
-    this.santaBag = this.santaBagVolume
-    this.santaLog = '';
+    this.santaBag = this.santaBagVolume;
     this.giftsInBag = [];
 
     this.loadingSantaBag(); 
   }
 
-  loadingSantaBag(selectedChild?: Child): void{
+  loadingSantaBag(selectedChild?: Child, santaBag?: number): void{
     if(!selectedChild){
-      this.santaBag = this.santaBagVolume;
+      santaBag = this.santaBagVolume;
       selectedChild = this.sortedList[0];
-      this.route.length = this.route.length + selectedChild.toSantaBase;
+      this.testCaseSummary.length = this.testCaseSummary.length + selectedChild.toSantaBase;
     } else {
-      this.route.length = this.route.length + selectedChild.distance;
+      this.testCaseSummary.length = this.testCaseSummary.length + selectedChild.distance;
     };
-    this.addToSantaBag(selectedChild);
+    santaBag = this.addToSantaBag(selectedChild, santaBag);
         
-    if (this.santaBag > 0){
-      let nextSelectedChild: Child | null = this.findSibling(selectedChild);
+    if (santaBag > 0){
+      let nextSelectedChild: Child | null = this.findNeighbor(selectedChild, santaBag);
         
       if (nextSelectedChild) {
-        this.loadingSantaBag(nextSelectedChild)
+        this.loadingSantaBag(nextSelectedChild, santaBag)
       } else {
         this.santaGoToBase();
-        this.checkList();
       }
     } else {
       this.santaGoToBase();
-      this.checkList();
     }
   }
 
-  addToSantaBag(selectedChild: Child): void{
-    this.santaBag = this.santaBag - selectedChild.giftVolume;
-    this.santaLog = this.santaLog + '-' + selectedChild.index + ' ';
+  finishTestCase(): void{
+    this.testCaseSummary.output = this.testCaseSummary.output + '0';
+    this.routes.push(this.testCaseSummary);
+  }
+
+  addToSantaBag(selectedChild: Child, santaBag: number): number{
+    santaBag = santaBag - selectedChild.giftVolume;
+    this.testCaseSummary.output = this.testCaseSummary.output + '-' + selectedChild.index + ' ';
     this.giftsInBag.push(selectedChild);
     this.removeChildFromList(selectedChild);
+    return santaBag;
   }
 
   removeChildFromList(child: Child): void{
@@ -144,8 +145,8 @@ export class SantaHelperComponent {
     this.sortedList.splice(childIndex, 1);
   }
 
-  findSibling(selectedChild: Child): Child | null {
-    let list = this.sortedList.filter(child => child.giftVolume <= this.santaBag);
+  findNeighbor(selectedChild: Child, santaBag: number): Child | null {
+    let list = this.sortedList.filter(child => child.giftVolume <= santaBag);
 
     if (list.length == 0) {
       return null;
@@ -155,36 +156,26 @@ export class SantaHelperComponent {
       list[i].distance = this.countDistance(selectedChild.homeX, selectedChild.homeY, list[i].homeX, list[i].homeY);
     }
 
-    let sortedSiblings = list.length > 1 ? this.sortList(list, 'distance') : list;
-    return sortedSiblings[0];
+    let sortedNeighbors = list.length > 1 ? this.sortList(list, 'distance') : list;
+    return sortedNeighbors[0];
   }
 
   
-  santaGoToBase(){
+  santaGoToBase(): void{
     for (let i = 0; i < this.giftsInBag.length; i++){
-      this.santaLog = this.santaLog + ' ' +this.giftsInBag[i].index + ' ';
+      this.testCaseSummary.output = this.testCaseSummary.output + ' ' +this.giftsInBag[i].index + ' ';
     }
-    this.route.length = this.route.length + this.giftsInBag[this.giftsInBag.length-1].toSantaBase;
-    this.santaBag = 0;
+    this.testCaseSummary.length = this.testCaseSummary.length + this.giftsInBag[this.giftsInBag.length-1].toSantaBase;
     this.giftsInBag = [];
-    
-  }
 
-  checkList(): void {
-    if (this.sortedList.length > 0) {
+    if(this.sortedList.length > 0){
       this.loadingSantaBag();
     } else {
-      this.santaLog = this.santaLog + '0';
-      this.route.output = this.santaLog;
-      this.checkScore(this.route);
-      console.log(this.route);
+      this.finishTestCase();
     }
   }
 
-  checkScore(route): void {
-  }
-
-  sortList(list, property): Child[] {
+  sortList(list: Child[], property: string): Child[] {
     return list.sort((a: Child, b: Child): number => { return a[property] > b[property] ? 1 : -1 });
   }
 
